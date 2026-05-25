@@ -25,11 +25,26 @@ export type Oportunidade = {
   url_pncp: string | null
   capag: string | null
   capag_icf: string | null
+  capag_ind1: string | null
+  capag_ind2: string | null
+  capag_ind3: string | null
   score: number
   relevante: boolean
   justificativa: string
   palavras_chave: string[]
   alertas: string[]
+  // v2
+  tem_pegadinha: boolean
+  pegadinhas: string[]
+  valor_por_item: number | null
+  e_marcenaria: boolean | null
+  material: string | null
+  quantidade_itens: number | null
+  recomendacao: 'PARTICIPAR' | 'AVALIAR' | 'IGNORAR' | null
+  razao_recomendacao: string | null
+  itens_detalhados: any[] | null
+  arquivos: any[] | null
+  versao: number
   dias_restantes: number | null
 }
 

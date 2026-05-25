@@ -56,6 +56,20 @@ function StatCard({ label, value, Icon, accent }: { label: string; value: string
   )
 }
 
+function RecBadge({ rec }: { rec: string | null }) {
+  const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
+    PARTICIPAR: { bg: '#052e16', color: '#34d399', border: '#065f46', label: '🟢 PARTICIPAR' },
+    AVALIAR:    { bg: '#451a03', color: '#fbbf24', border: '#92400e', label: '🟡 AVALIAR' },
+    IGNORAR:    { bg: '#450a0a', color: '#f87171', border: '#991b1b', label: '🔴 IGNORAR' },
+  }
+  const s = map[rec || ''] || { bg: '#1f2937', color: '#6b7280', border: '#374151', label: '— PENDENTE' }
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, border: '1px solid', background: s.bg, color: s.color, borderColor: s.border }}>
+      {s.label}
+    </span>
+  )
+}
+
 function CardLicitacao({ item, expanded, onToggle }: { item: Oportunidade; expanded: boolean; onToggle: () => void }) {
   const urgente = item.dias_restantes !== null && item.dias_restantes <= 3 && item.dias_restantes >= 0
 
@@ -92,6 +106,12 @@ function CardLicitacao({ item, expanded, onToggle }: { item: Oportunidade; expan
               {urgente && (
                 <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: '#450a0a', color: '#f87171', border: '1px solid #991b1b', fontWeight: 600 }}>
                   ⚠️ Urgente
+                </span>
+              )}
+              <RecBadge rec={item.recomendacao || null} />
+              {item.tem_pegadinha && (
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: '#451a03', color: '#fb923c', border: '1px solid #c2410c', fontWeight: 600 }}>
+                  🔍 Pegadinha
                 </span>
               )}
             </div>
@@ -133,9 +153,15 @@ function CardLicitacao({ item, expanded, onToggle }: { item: Oportunidade; expan
       {/* Detalhes expandidos */}
       {expanded && (
         <div style={{ borderTop: '1px solid #1f2937', padding: 16 }}>
+          {/* Recomendação + razão */}
+          <div style={{ background: '#0a0a0a', border: '1px solid #1f2937', borderRadius: 10, padding: 12, marginBottom: 12, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <RecBadge rec={item.recomendacao || null} />
+            <p style={{ margin: 0, fontSize: 13, color: '#d1d5db', lineHeight: 1.5 }}>{item.razao_recomendacao || item.justificativa}</p>
+          </div>
+
           {/* Box IA */}
-          <div style={{ background: '#1e1b4b', border: '1px solid #312e81', borderRadius: 10, padding: 12, marginBottom: 16 }}>
-            <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: '#818cf8' }}>🤖 Análise da IA</p>
+          <div style={{ background: '#1e1b4b', border: '1px solid #312e81', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+            <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: '#818cf8' }}>🤖 Análise completa</p>
             <p style={{ margin: 0, fontSize: 13, color: '#c7d2fe', lineHeight: 1.5 }}>{item.justificativa}</p>
             {item.palavras_chave?.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
@@ -146,6 +172,16 @@ function CardLicitacao({ item, expanded, onToggle }: { item: Oportunidade; expan
             )}
           </div>
 
+          {/* Pegadinhas */}
+          {item.tem_pegadinha && item.pegadinhas?.length > 0 && (
+            <div style={{ background: '#431407', border: '1px solid #9a3412', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+              <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: '#fb923c' }}>🔍 Atenção — Pegadinhas encontradas</p>
+              {item.pegadinhas.map((p, i) => (
+                <p key={i} style={{ margin: '3px 0 0', fontSize: 13, color: '#fed7aa' }}>• {p}</p>
+              ))}
+            </div>
+          )}
+
           {/* Objeto */}
           {item.descricao && (
             <div style={{ marginBottom: 16 }}>
@@ -155,19 +191,59 @@ function CardLicitacao({ item, expanded, onToggle }: { item: Oportunidade; expan
           )}
 
           {/* Grid info */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12, marginBottom: 16 }}>
             {[
               { label: 'Município', value: `${item.municipio}/${item.uf}` },
               { label: 'Encerramento', value: formatDate(item.data_encerramento_real || item.data_encerramento), urgente },
-              { label: 'Valor estimado', value: formatCurrency(item.valor_estimado), green: true },
-              { label: 'CAPAG', value: item.capag ? `${item.capag} ${item.capag_icf || ''}` : '—' },
+              { label: 'Valor total', value: formatCurrency(item.valor_estimado), green: true },
+              { label: 'Valor/item', value: item.valor_por_item ? `R$ ${item.valor_por_item.toLocaleString('pt-BR')}` : '—', green: true },
+              { label: 'Qtd peças', value: item.quantidade_itens ?? '—' },
+              { label: 'Material', value: item.material || '—' },
+              { label: 'CAPAG', value: item.capag ? `${item.capag} — ${item.capag_icf || ''}` : '—' },
+              { label: 'Endividamento', value: item.capag_ind1 || '—' },
+              { label: 'Poupança', value: item.capag_ind2 || '—' },
+              { label: 'Liquidez', value: item.capag_ind3 || '—' },
             ].map(({ label, value, urgente: u, green }) => (
               <div key={label}>
                 <p style={{ margin: '0 0 2px', fontSize: 11, color: '#4b5563', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: u ? '#f87171' : green ? '#34d399' : '#d1d5db' }}>{value}</p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: u ? '#f87171' : green ? '#34d399' : '#d1d5db' }}>{String(value)}</p>
               </div>
             ))}
           </div>
+
+          {/* Itens do edital */}
+          {item.itens_detalhados && item.itens_detalhados.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 600, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Itens do edital</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {item.itens_detalhados.slice(0, 3).map((it: any, i: number) => (
+                  <div key={i} style={{ background: '#0a0a0a', border: '1px solid #1f2937', borderRadius: 8, padding: '8px 10px' }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af' }}>{it.quantidade || '?'} {it.unidadeMedida || 'un'} — </span>
+                    <span style={{ fontSize: 12, color: '#d1d5db' }}>{it.descricao?.substring(0, 120)}</span>
+                    {it.valorUnitarioEstimado > 0 && (
+                      <span style={{ fontSize: 12, color: '#34d399', marginLeft: 6 }}>R$ {Number(it.valorUnitarioEstimado).toLocaleString('pt-BR')}/un</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Arquivos do edital */}
+          {item.arquivos && item.arquivos.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 600, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Arquivos do edital</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {item.arquivos.slice(0, 5).map((arq: any, i: number) => (
+                  <a key={i} href={arq.url} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: 12, color: '#818cf8', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    📄 {arq.titulo?.substring(0, 60)}
+                    <span style={{ fontSize: 11, color: '#4b5563' }}>({arq.tipoDocumentoDescricao})</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Alertas */}
           {item.alertas?.length > 0 && (
@@ -288,6 +364,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('')
   const [filtroUF, setFiltroUF] = useState('')
   const [filtroCapag, setFiltroCapag] = useState('')
+  const [filtroRec, setFiltroRec] = useState('')
   const [showConfig, setShowConfig] = useState(false)
   const [config, setConfig] = useState(DEFAULT_CONFIG)
   const [stats, setStats] = useState({ total: 0, analisadas: 0, relevantes: 0 })
@@ -332,6 +409,7 @@ export default function Dashboard() {
     return (!q || [o.titulo, o.orgao, o.descricao, o.municipio].some(t => t?.toLowerCase().includes(q)))
       && (!filtroUF || o.uf === filtroUF)
       && (!filtroCapag || o.capag === filtroCapag)
+      && (!filtroRec   || o.recomendacao === filtroRec)
   })
 
   const ufs = [...new Set(oportunidades.map(o => o.uf))].sort()
@@ -395,6 +473,7 @@ export default function Dashboard() {
           {[
             { value: filtroUF, onChange: setFiltroUF, options: ufs, placeholder: 'Todos estados' },
             { value: filtroCapag, onChange: setFiltroCapag, options: capags as string[], placeholder: 'CAPAG: todos' },
+            { value: filtroRec, onChange: setFiltroRec, options: ['PARTICIPAR','AVALIAR','IGNORAR'], placeholder: 'Recomendação' },
           ].map(({ value, onChange, options, placeholder }) => (
             <select key={placeholder} value={value} onChange={e => onChange(e.target.value)}
               style={{ background: '#0d1117', border: '1px solid #1f2937', borderRadius: 8, padding: '8px 10px', fontSize: 13, color: '#d1d5db', outline: 'none' }}>
@@ -402,8 +481,8 @@ export default function Dashboard() {
               {options.map(o => <option key={o} value={o}>{placeholder.includes('CAPAG') ? `CAPAG ${o}` : o}</option>)}
             </select>
           ))}
-          {(search || filtroUF || filtroCapag) && (
-            <button onClick={() => { setSearch(''); setFiltroUF(''); setFiltroCapag('') }}
+          {(search || filtroUF || filtroCapag || filtroRec) && (
+            <button onClick={() => { setSearch(''); setFiltroUF(''); setFiltroCapag(''); setFiltroRec('') }}
               style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px', borderRadius: 8, background: '#1f2937', border: '1px solid #374151', color: '#9ca3af', fontSize: 13, cursor: 'pointer' }}>
               <X size={12} /> Limpar
             </button>
