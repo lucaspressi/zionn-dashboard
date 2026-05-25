@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, type Oportunidade } from '@/lib/supabase'
 import { formatCurrency, formatDate } from '@/lib/utils'
