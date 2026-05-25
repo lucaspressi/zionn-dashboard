@@ -295,13 +295,19 @@ export default function Dashboard() {
   const fetchDados = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await supabase
+      const query = supabase
         .from('v_oportunidades_relevantes')
         .select('*')
         .gte('score', config.score_minimo)
-        .in('uf', config.ufs_alvo)
         .order('score', { ascending: false })
         .limit(300)
+
+      // Filtra UFs só se não for "todas"
+      if (config.ufs_alvo.length < 27) {
+        query.in('uf', config.ufs_alvo)
+      }
+
+      const { data } = await query
       if (data) { setOportunidades(data as Oportunidade[]); setLastUpdate(new Date()) }
 
       const [{ count: t }, { count: a }, { count: r }] = await Promise.all([
