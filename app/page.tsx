@@ -11,12 +11,12 @@ import {
   Zap, X, MapPin, DollarSign, Calendar, CheckCircle
 } from 'lucide-react'
 
+const TODAS_UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
+
 const DEFAULT_CONFIG = {
-  ufs_alvo: ['SP', 'RJ', 'MG', 'ES', 'PR', 'SC'],
+  ufs_alvo: [...TODAS_UFS], // mostra tudo por padrão, usuário filtra
   score_minimo: 60,
 }
-
-const TODAS_UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
 
 // ── Score helpers ──────────────────────────────────────────────────
 function scoreStyle(score: number): string {
